@@ -33,5 +33,5 @@
 
 - [x] 5.1 對照 specs 逐項手動驗收（建立／完成／提醒置頂／重開資料保留）— Playwright 煙霧測試通過
 - [x] 5.2 `vite build` 成功、本機預覽通過
-- [ ] 5.3 建立 GitHub repo（camadalobster-source/work-hub）並推送 — 待使用者授權
-- [ ] 5.4 開啟 GitHub Pages，確認線上 demo 可用 — 待使用者授權
+- [x] 5.3 建立 GitHub repo（camadalobster-source/work-hub）並推送
+- [x] 5.4 開啟 GitHub Pages，確認線上 demo 可用 — https://camadalobster-source.github.io/work-hub/
