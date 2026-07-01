@@ -13,4 +13,6 @@ export interface TaskRepository {
   remove(id: string): Promise<void>
   // 將某分區的待辦依給定 id 順序重新編號（持久化拖曳結果）
   reorder(orderedIds: string[]): Promise<void>
+  // 以給定資料整批取代（匯入用）
+  replaceAll(tasks: Task[]): Promise<void>
 }

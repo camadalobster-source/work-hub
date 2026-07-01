@@ -10,20 +10,23 @@ export interface Task {
   plannedDate?: ISODate // 預計處理日；undefined = 之後(someday)
   remindAt?: ISODate // 提醒日；與 plannedDate 獨立
   sortTime?: HHmm // 可選排序時間
+  waiting?: boolean // 等待中（卡在別人/被阻擋）；覆蓋日期分區，且不進置頂提醒。選填、向下相容
+  deferCount?: number // 延期次數（原子習慣式累計標記）；每按一次「延一天」+1。選填、向下相容
   order: number // 同分區內拖曳順序
   status: 'open' | 'done'
   completedAt?: string // ISO datetime
   createdAt: string // ISO datetime
 }
 
-export type Area = 'today' | 'tomorrow' | 'someday' | 'done'
+export type Area = 'today' | 'tomorrow' | 'someday' | 'waiting' | 'done'
 
-export const AREA_ORDER: Area[] = ['today', 'tomorrow', 'someday', 'done']
+export const AREA_ORDER: Area[] = ['today', 'tomorrow', 'someday', 'waiting', 'done']
 
 export const AREA_LABEL: Record<Area, string> = {
   today: '今天',
   tomorrow: '明天',
   someday: '之後',
+  waiting: '等待',
   done: '已完成',
 }
 
@@ -52,6 +55,7 @@ export function addDaysISO(iso: ISODate, days: number): ISODate {
 // 未完成且處理日早於今天（逾期）的，歸入「今天」讓它可被處理，同時會進置頂提醒區。
 export function areaOf(task: Task, today: ISODate): Area {
   if (task.status === 'done') return 'done'
+  if (task.waiting) return 'waiting' // 等待覆蓋日期分區
   const tomorrow = addDaysISO(today, 1)
   if (task.plannedDate === today) return 'today'
   if (task.plannedDate === tomorrow) return 'tomorrow'
@@ -64,6 +68,7 @@ export function areaOf(task: Task, today: ISODate): Area {
 // 未完成且：逾期 ｜ 今天到期 ｜ 已到提醒日
 export function needsAttention(task: Task, today: ISODate): boolean {
   if (task.status !== 'open') return false
+  if (task.waiting) return false // 等待中的事已被主動擱置，不再置頂催
   if (task.plannedDate && task.plannedDate <= today) return true
   if (task.remindAt && task.remindAt <= today) return true
   return false
@@ -91,7 +96,7 @@ export function sortTasks(tasks: Task[]): Task[] {
 // --- 分群（含已排序）---
 
 export function groupByArea(tasks: Task[], today: ISODate): Record<Area, Task[]> {
-  const groups: Record<Area, Task[]> = { today: [], tomorrow: [], someday: [], done: [] }
+  const groups: Record<Area, Task[]> = { today: [], tomorrow: [], someday: [], waiting: [], done: [] }
   for (const t of tasks) groups[areaOf(t, today)].push(t)
   for (const area of AREA_ORDER) groups[area] = sortTasks(groups[area])
   return groups

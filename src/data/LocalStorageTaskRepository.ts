@@ -70,4 +70,8 @@ export class LocalStorageTaskRepository implements TaskRepository {
     }
     this.write(tasks)
   }
+
+  async replaceAll(tasks: Task[]): Promise<void> {
+    this.write(tasks)
+  }
 }

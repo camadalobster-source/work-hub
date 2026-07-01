@@ -1,1 +1,59 @@
 @import "tailwindcss";
+
+/* 深色模式改為 class 切換（掛在 <html class="dark">），而非跟隨系統 */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* 設計代幣：中性紙墨 ＋ 單一主色（松綠），語意色僅留 alert/hold。
+   同一組 token class（bg-canvas / text-ink…）在深色下靠變數翻轉，不必寫 dark: 變體。 */
+@theme {
+  --color-canvas: #e8eaee; /* 桌面底 */
+  --color-surface: #ffffff; /* 卡片/面板 */
+  --color-ink: #1b2330; /* 主要文字 */
+  --color-muted: #616b7a; /* 次要文字 */
+  --color-line: #d6dae1; /* 髮絲邊框 */
+  --color-accent: #16706a; /* 唯一主色 */
+  --color-accent-soft: #e2efed; /* 主色極淡底（選中/今天） */
+  --color-alert: #c0453b; /* 需注意（紅） */
+  --color-alert-soft: #f7e9e7;
+  --color-hold: #b67912; /* 等待/延期（赭黃） */
+  --color-hold-soft: #f6efdf;
+
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace;
+  --font-sans: "Noto Sans TC", system-ui, -apple-system, "PingFang TC", sans-serif;
+}
+
+/* 深色：翻轉語意 token（同一組 class 自動生效） */
+.dark {
+  --color-canvas: #12161c;
+  --color-surface: #1b2330;
+  --color-ink: #e7eaef;
+  --color-muted: #9aa4b2;
+  --color-line: #2a313c;
+  --color-accent: #4fb0a6;
+  --color-accent-soft: #143f3b;
+  --color-alert: #e06a60;
+  --color-alert-soft: #3a201d;
+  --color-hold: #d69a3a;
+  --color-hold-soft: #33290f;
+}
+
+/* 字級整體等比放大 1.3×（rem 基準跟著放大） */
+html {
+  font-size: 130%;
+}
+
+body {
+  font-family: var(--font-sans);
+}
+
+/* 主要按鈕：主色底，文字在深淺色下都保持高對比 */
+.btn-primary {
+  background: var(--color-accent);
+  color: #ffffff;
+}
+.btn-primary:hover {
+  opacity: 0.92;
+}
+.dark .btn-primary {
+  color: #08211f; /* 深色下主色較亮，改用深墨字 */
+}

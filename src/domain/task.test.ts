@@ -20,6 +20,7 @@ function mk(p: Partial<Task>): Task {
     plannedDate: p.plannedDate,
     remindAt: p.remindAt,
     sortTime: p.sortTime,
+    waiting: p.waiting,
     order: p.order ?? 0,
     status: p.status ?? 'open',
     completedAt: p.completedAt,
@@ -46,6 +47,13 @@ describe('areaOf 分區', () => {
   it('已完成歸入 done', () => {
     expect(areaOf(mk({ status: 'done', plannedDate: TODAY }), TODAY)).toBe('done')
   })
+  it('等待覆蓋日期分區（即使處理日是今天/逾期）', () => {
+    expect(areaOf(mk({ waiting: true, plannedDate: TODAY }), TODAY)).toBe('waiting')
+    expect(areaOf(mk({ waiting: true, plannedDate: '2026-06-20' }), TODAY)).toBe('waiting')
+  })
+  it('已完成優先於等待', () => {
+    expect(areaOf(mk({ status: 'done', waiting: true }), TODAY)).toBe('done')
+  })
   it('未來日期（非明天）歸入之後', () => {
     expect(areaOf(mk({ plannedDate: '2026-07-15' }), TODAY)).toBe('someday')
   })
@@ -65,6 +73,9 @@ describe('needsAttention 置頂提醒', () => {
   })
   it('已完成不觸發', () => {
     expect(needsAttention(mk({ status: 'done', plannedDate: TODAY }), TODAY)).toBe(false)
+  })
+  it('等待中不觸發（即使逾期）', () => {
+    expect(needsAttention(mk({ waiting: true, plannedDate: '2026-06-20' }), TODAY)).toBe(false)
   })
 })
 
