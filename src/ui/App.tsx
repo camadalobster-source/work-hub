@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { LocalStorageTaskRepository } from '../data/LocalStorageTaskRepository'
 import { NewTaskInput } from '../data/TaskRepository'
-import { ISODate, Task, addDaysISO, attentionTasks, groupByArea, todayISO } from '../domain/task'
+import { ISODate, Task, addDaysISO, groupByArea, todayISO } from '../domain/task'
 import Board from './Board'
 import TaskComposer from './TaskComposer'
 
@@ -9,6 +9,8 @@ export default function App() {
   const repo = useMemo(() => new LocalStorageTaskRepository(), [])
   const [tasks, setTasks] = useState<Task[]>([])
   const [editing, setEditing] = useState<Task | null>(null)
+  const [adding, setAdding] = useState(false)
+  const composerOpen = adding || !!editing
   const today = todayISO()
   const composerRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -43,7 +45,6 @@ export default function App() {
   }, [editing])
 
   const groups = useMemo(() => groupByArea(tasks, today), [tasks, today])
-  const attention = useMemo(() => attentionTasks(tasks, today), [tasks, today])
 
   const handleCreate = async (input: NewTaskInput) => {
     await repo.create(input)
@@ -174,53 +175,30 @@ export default function App() {
           </div>
         </header>
 
-        <div className="mb-6 grid gap-4 md:grid-cols-2">
-          <div ref={composerRef} className="scroll-mt-4">
+        {/* 新增待辦：預設收合成一條，點一下就地展開（行內快速新增） */}
+        <div ref={composerRef} className="mb-5 scroll-mt-4">
+          {composerOpen ? (
             <TaskComposer
               editing={editing}
               onCreate={handleCreate}
               onUpdate={handleUpdate}
               onCancelEdit={() => setEditing(null)}
+              onClose={() => setAdding(false)}
             />
-          </div>
-
-          {/* 需注意：精簡提醒（名稱＋勾選；點名稱可編輯） */}
-          <section className="rounded-lg border border-line bg-surface p-4 shadow-sm">
-            <h2 className="mb-3 flex items-center gap-2 border-l-2 border-alert pl-2 text-sm font-semibold text-ink">
-              需注意
-              <span className="font-mono text-xs text-alert">{attention.length}</span>
-            </h2>
-            {attention.length === 0 ? (
-              <p className="text-sm text-muted">沒有需要注意的事。</p>
-            ) : (
-              <ul className="space-y-2">
-                {attention.map((t) => (
-                  <li key={t.id} className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={false}
-                      onChange={() => handleToggleDone(t)}
-                      className="h-4 w-4 shrink-0 cursor-pointer accent-[var(--color-alert)]"
-                      aria-label="標為完成"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setEditing(t)}
-                      className="truncate text-left text-[0.9375rem] text-ink hover:text-alert hover:underline"
-                      title="編輯"
-                    >
-                      {t.title}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setAdding(true)}
+              className="flex w-full items-center gap-2 rounded-lg border border-dashed border-line bg-surface px-4 py-3 text-sm font-medium text-muted transition hover:border-accent hover:text-accent"
+            >
+              <span className="font-mono text-base leading-none text-accent">＋</span>
+              新增待辦
+            </button>
+          )}
         </div>
 
         <Board
           groups={groups}
-          attention={attention}
           today={today}
           onToggleDone={handleToggleDone}
           onEdit={setEditing}

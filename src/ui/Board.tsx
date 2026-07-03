@@ -8,12 +8,11 @@ import {
 } from '@dnd-kit/core'
 import { SortableContext, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { useState } from 'react'
-import { AREA_LABEL, Area, ISODate, Task } from '../domain/task'
+import { AREA_LABEL, Area, ISODate, Task, isUrgent } from '../domain/task'
 import TaskItem from './TaskItem'
 
 interface Props {
   groups: Record<Area, Task[]>
-  attention: Task[]
   today: ISODate
   onToggleDone: (task: Task) => void
   onEdit: (task: Task) => void
@@ -34,20 +33,19 @@ function dateline(iso: ISODate) {
 }
 
 export default function Board(props: Props) {
-  const { groups, attention, today } = props
-  const flaggedIds = new Set(attention.map((t) => t.id))
+  const { groups, today } = props
 
   return (
     <div className="space-y-5">
       {/* 置頂：今天（主要區、最顯眼） */}
-      <Section area="today" tasks={groups.today} today={today} flaggedIds={flaggedIds} handlers={props} prominent />
+      <Section area="today" tasks={groups.today} today={today} handlers={props} prominent />
 
       {/* 次要區：兩欄並排、可摺疊 */}
       <div className="grid gap-3 md:grid-cols-2">
-        <Section area="tomorrow" tasks={groups.tomorrow} today={today} flaggedIds={flaggedIds} handlers={props} collapsible />
-        <Section area="someday" tasks={groups.someday} today={today} flaggedIds={flaggedIds} handlers={props} collapsible />
-        <Section area="waiting" tasks={groups.waiting} today={today} flaggedIds={flaggedIds} handlers={props} collapsible />
-        <Section area="done" tasks={groups.done} today={today} flaggedIds={flaggedIds} handlers={props} collapsible defaultCollapsed />
+        <Section area="tomorrow" tasks={groups.tomorrow} today={today} handlers={props} collapsible />
+        <Section area="someday" tasks={groups.someday} today={today} handlers={props} collapsible />
+        <Section area="waiting" tasks={groups.waiting} today={today} handlers={props} collapsible />
+        <Section area="done" tasks={groups.done} today={today} handlers={props} collapsible defaultCollapsed />
       </div>
     </div>
   )
@@ -68,7 +66,6 @@ function Section({
   area,
   tasks,
   today,
-  flaggedIds,
   handlers,
   prominent = false,
   collapsible = false,
@@ -77,7 +74,6 @@ function Section({
   area: Area
   tasks: Task[]
   today: ISODate
-  flaggedIds: Set<string>
   handlers: Props
   prominent?: boolean
   collapsible?: boolean
@@ -108,7 +104,6 @@ function Section({
                 key={t.id}
                 task={t}
                 today={today}
-                flagged={flaggedIds.has(t.id)}
                 {...itemHandlers(handlers)}
               />
             ))
@@ -121,13 +116,19 @@ function Section({
   // 今天＝signature 橫幅：mono 日期 + 星期 + 計數，松綠細線
   if (prominent) {
     const { date, weekday } = dateline(today)
+    const urgent = tasks.filter((t) => isUrgent(t, today)).length
     return (
       <section className="rounded-lg border border-line bg-surface p-4 shadow-sm">
         <div className="flex items-baseline gap-3 border-b-2 border-accent pb-2">
           <span className="font-mono text-lg font-semibold text-ink">{date}</span>
           <span className="text-sm text-muted">{weekday}</span>
-          <span className="ml-auto text-sm font-semibold text-ink">
+          <span className="ml-auto flex items-baseline gap-2 text-sm font-semibold text-ink">
             今天 <span className="font-mono text-accent">{tasks.length}</span>
+            {urgent > 0 && (
+              <span className="text-alert">
+                需注意 <span className="font-mono">{urgent}</span>
+              </span>
+            )}
           </span>
         </div>
         {list}

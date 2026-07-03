@@ -52,15 +52,26 @@ export function addDaysISO(iso: ISODate, days: number): ISODate {
 
 // --- 分區 ---
 
-// 未完成且處理日早於今天（逾期）的，歸入「今天」讓它可被處理，同時會進置頂提醒區。
+// 歸入「今天」的三種情況：處理日是今天、逾期、或提醒日已到。
+// 提醒＝今天要看的事，故提醒到期就把該事浮上今天，不再另立平行清單。
 export function areaOf(task: Task, today: ISODate): Area {
   if (task.status === 'done') return 'done'
   if (task.waiting) return 'waiting' // 等待覆蓋日期分區
   const tomorrow = addDaysISO(today, 1)
   if (task.plannedDate === today) return 'today'
-  if (task.plannedDate === tomorrow) return 'tomorrow'
   if (task.plannedDate && task.plannedDate < today) return 'today' // 逾期 → 今天
+  if (task.remindAt && task.remindAt <= today) return 'today' // 提醒到期 → 浮上今天
+  if (task.plannedDate === tomorrow) return 'tomorrow'
   return 'someday'
+}
+
+// 今天區塊內「需注意」的判定：逾期或提醒到期（不含單純今天到期），
+// 未完成且非等待。用於今天區塊的計數與逐列標記，讓緊急的事在今天裡跳出來。
+export function isUrgent(task: Task, today: ISODate): boolean {
+  if (task.status !== 'open' || task.waiting) return false
+  if (task.plannedDate && task.plannedDate < today) return true
+  if (task.remindAt && task.remindAt <= today) return true
+  return false
 }
 
 // --- 置頂提醒 ---

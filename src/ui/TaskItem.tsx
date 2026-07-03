@@ -7,7 +7,6 @@ import { linkify } from './linkify'
 interface Props {
   task: Task
   today: ISODate
-  flagged?: boolean // 是否在置頂提醒區呈現
   onToggleDone: (task: Task) => void
   onEdit: (task: Task) => void
   onRemove: (task: Task) => void
@@ -52,7 +51,6 @@ function dateBadges(task: Task, today: ISODate) {
 export default function TaskItem({
   task,
   today,
-  flagged,
   onToggleDone,
   onEdit,
   onRemove,
@@ -73,17 +71,20 @@ export default function TaskItem({
   const badges = dateBadges(task, today)
   const close = () => setMenuOpen(false)
 
+  // 逾期＝紅、提醒到期＝赭黃、等待＝赭黃，其餘素邊。紅色只留給真正逾期。
+  const overdue = !done && !task.waiting && !!task.plannedDate && task.plannedDate < today
+  const reminderDue = !done && !task.waiting && !overdue && !!task.remindAt && task.remindAt <= today
+  const edge = overdue
+    ? 'border-l-2 border-l-alert'
+    : reminderDue || (task.waiting && !done)
+      ? 'border-l-2 border-l-hold'
+      : ''
+
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`rounded-md border bg-surface p-3 shadow-sm transition ${
-        flagged
-          ? 'border-line border-l-2 border-l-alert'
-          : task.waiting && !done
-            ? 'border-line border-l-2 border-l-hold'
-            : 'border-line'
-      }`}
+      className={`rounded-md border border-line bg-surface p-3 shadow-sm transition ${edge}`}
     >
       <div className="flex items-start gap-2">
         <button

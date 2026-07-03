@@ -3,6 +3,7 @@ import {
   Task,
   addDaysISO,
   areaOf,
+  isUrgent,
   needsAttention,
   sortTasks,
   groupByArea,
@@ -56,6 +57,36 @@ describe('areaOf 分區', () => {
   })
   it('未來日期（非明天）歸入之後', () => {
     expect(areaOf(mk({ plannedDate: '2026-07-15' }), TODAY)).toBe('someday')
+  })
+  it('提醒到期浮上今天（無處理日）', () => {
+    expect(areaOf(mk({ remindAt: TODAY }), TODAY)).toBe('today')
+    expect(areaOf(mk({ remindAt: '2026-06-22' }), TODAY)).toBe('today')
+  })
+  it('提醒到期覆蓋未來處理日，浮上今天', () => {
+    expect(areaOf(mk({ plannedDate: '2026-07-15', remindAt: TODAY }), TODAY)).toBe('today')
+    expect(areaOf(mk({ plannedDate: TOMORROW, remindAt: TODAY }), TODAY)).toBe('today')
+  })
+  it('未來提醒日不影響分區', () => {
+    expect(areaOf(mk({ plannedDate: TOMORROW, remindAt: '2026-07-31' }), TODAY)).toBe('tomorrow')
+    expect(areaOf(mk({ remindAt: '2026-07-31' }), TODAY)).toBe('someday')
+  })
+})
+
+describe('isUrgent 今天內需注意', () => {
+  it('逾期觸發', () => {
+    expect(isUrgent(mk({ plannedDate: '2026-06-20' }), TODAY)).toBe(true)
+  })
+  it('提醒到期觸發', () => {
+    expect(isUrgent(mk({ remindAt: TODAY }), TODAY)).toBe(true)
+  })
+  it('單純今天到期不算需注意', () => {
+    expect(isUrgent(mk({ plannedDate: TODAY }), TODAY)).toBe(false)
+  })
+  it('等待中不觸發（即使逾期）', () => {
+    expect(isUrgent(mk({ waiting: true, plannedDate: '2026-06-20' }), TODAY)).toBe(false)
+  })
+  it('已完成不觸發', () => {
+    expect(isUrgent(mk({ status: 'done', plannedDate: '2026-06-20' }), TODAY)).toBe(false)
   })
 })
 

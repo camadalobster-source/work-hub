@@ -7,6 +7,7 @@ interface Props {
   onCreate: (input: NewTaskInput) => void
   onUpdate: (id: string, patch: Partial<Task>) => void
   onCancelEdit: () => void
+  onClose?: () => void // 新增模式下收起表單
 }
 
 // 新增時的預設：預計處理日帶今天（貼合「每天早上排今天」）；提醒日/排序時間留空。
@@ -14,7 +15,7 @@ function emptyForm() {
   return { title: '', notes: '', plannedDate: todayISO(), remindAt: '', sortTime: '' }
 }
 
-export default function TaskComposer({ editing, onCreate, onUpdate, onCancelEdit }: Props) {
+export default function TaskComposer({ editing, onCreate, onUpdate, onCancelEdit, onClose }: Props) {
   const [form, setForm] = useState(emptyForm)
   const [showCustom, setShowCustom] = useState(false)
 
@@ -78,7 +79,7 @@ export default function TaskComposer({ editing, onCreate, onUpdate, onCancelEdit
             '新增待辦'
           )}
         </h2>
-        {editing && (
+        {editing ? (
           <button
             type="button"
             onClick={onCancelEdit}
@@ -86,6 +87,16 @@ export default function TaskComposer({ editing, onCreate, onUpdate, onCancelEdit
           >
             取消
           </button>
+        ) : (
+          onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded px-2 py-0.5 text-xs text-muted hover:text-ink"
+            >
+              收起
+            </button>
+          )
         )}
       </div>
 
